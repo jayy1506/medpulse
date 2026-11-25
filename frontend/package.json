@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",
-    "firebase": "^12.19.0",
+    "firebase": "^13.4.0",
     "framer-motion": "^12.23.25",
     "gsap": "^3.14.1",
     "lucide-react": "^1.47.0",

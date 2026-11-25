@@ -43,7 +43,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const candidateDistPaths = [
   path.resolve(__dirname, '../../frontend/dist'),
+  path.resolve(__dirname, '../client_dist'),
   path.resolve(process.cwd(), 'frontend/dist'),
+  path.resolve(process.cwd(), 'client_dist'),
   path.resolve(process.cwd(), '../frontend/dist'),
   path.resolve(__dirname, '../frontend/dist')
 ];

@@ -10,8 +10,9 @@ lerna-debug.log*
 # Dependencies
 node_modules/
 
-# Production Build
-dist/
+# Production Build (Tracked for zero-build Render deployment)
+!dist/
+!dist/**
 dist-ssr/
 
 # Environment

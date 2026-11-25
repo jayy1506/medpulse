@@ -108,32 +108,32 @@
     --primary-light: #A7DFD9;
     --primary-contrast: #FFFFFF;
 
-    --bg: #FFFFFF;
-    --surface: #FFFFFF;
-    --border: #E5E5E5;
-    --text: #263746;
-    --muted: #525252;
-    --accent: #159A91;
+    --bg: #0B222E;
+    --surface: #0F2D3D;
+    --border: #1E4E66;
+    --text: #FAFAFA;
+    --muted: #A3A3A3;
+    --accent: #20B8AE;
 
     --navy: #123B50;
-    --teal: #159A91;
-    --mint: #E9F5F3;
+    --teal: #20B8AE;
+    --mint: #0F2D3D;
     --pure-white: #FFFFFF;
     --amber: #F2B66D;
-    --slate: #263746;
+    --slate: #E5E5E5;
 
-    --color-bg-base: #FAFAFA;
-    --color-bg-surface: #FFFFFF;
-    --color-bg-muted: #E9F5F3;
-    --color-border: #E5E5E5;
-    --color-border-subtle: #D4D4D4;
-    --color-text-main: #263746;
-    --color-text-muted: #525252;
+    --color-bg-base: #0B222E;
+    --color-bg-surface: #0F2D3D;
+    --color-bg-muted: #123B50;
+    --color-border: #1E4E66;
+    --color-border-subtle: #263746;
+    --color-text-main: #FAFAFA;
+    --color-text-muted: #A3A3A3;
 
-    --color-primary: #159A91;
-    --color-primary-hover: #12837B;
-    --color-primary-subtle: #E9F5F3;
-    --color-primary-border: #159A91;
+    --color-primary: #20B8AE;
+    --color-primary-hover: #159A91;
+    --color-primary-subtle: #123B50;
+    --color-primary-border: #20B8AE;
   }
 
   body {
@@ -210,4 +210,32 @@
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #404040;
+}
+
+/* Animations for Nova Assistant & UI Modals */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideLeft {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes bounceShort {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -6px); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+.animate-slide-left {
+  animation: slideLeft 0.25s ease-out forwards;
+}
+
+.animate-bounce-short {
+  animation: bounceShort 0.5s ease-in-out;
 }

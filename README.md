@@ -1,9 +1,10 @@
 # MedPulse — Clinical Nursing LMS & RAG AI Tutor Platform
 
+[![Live App on Render](https://img.shields.io/badge/Live%20App-Render%20Web%20Service-159a91.svg?style=flat&logo=render)](https://medpulse-h24h.onrender.com)
 [![CI/CD Pipeline](https://github.com/jayy1506/Nursing/actions/workflows/ci.yml/badge.svg)](https://github.com/jayy1506/Nursing/actions/workflows/ci.yml)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![OpenAPI 3.0](https://img.shields.io/badge/OpenAPI-3.0-blue.svg)](http://localhost:5000/api/docs)
+[![OpenAPI 3.0](https://img.shields.io/badge/OpenAPI-3.0-blue.svg)](https://medpulse-h24h.onrender.com/api/docs)
 [![Developed by Jay](https://img.shields.io/badge/Developed%20by-Jay-10b981.svg?style=flat&logo=codeforces)](https://github.com/jayy1506)
 
 **MedPulse** is an enterprise-grade clinical education and Learning Management System (LMS) developed by **Jay**, purpose-built for nursing and foundational medical sciences under **Indian Nursing Council (INC) Competency-Based Medical Education (CBME)** standards.
@@ -12,11 +13,17 @@ MedPulse pairs interactive multi-track curriculum visualizers (Applied Anatomy, 
 
 ---
 
-## 📸 Platform Preview & Demos
+## 🌐 Live Deployment & Interactive Docs
 
 > [!TIP]
-> **Production Deployment (Render)**: Unified single-service full-stack deployment via `render.yaml`  
-> **Interactive API Docs (Swagger UI)**: [http://localhost:5000/api/docs](http://localhost:5000/api/docs)
+> 🩺 **Live Web Application**: [https://medpulse-h24h.onrender.com](https://medpulse-h24h.onrender.com)  
+> 📖 **Interactive OpenAPI / Swagger Documentation**: [https://medpulse-h24h.onrender.com/api/docs](https://medpulse-h24h.onrender.com/api/docs)  
+> 🏥 **System Health & Diagnostic Telemetry**: [https://medpulse-h24h.onrender.com/api/health](https://medpulse-h24h.onrender.com/api/health)  
+> 🚀 **Deployment Architecture**: Unified fullstack single-service deployment on Render via `render.yaml` with pre-compiled production UI bundle.
+
+---
+
+## 📸 Platform Preview & Demos
 
 | Clinical Curriculum Hub | Interactive AI Clinical Tutor | Admin Telemetry & Ingestion |
 | :---: | :---: | :---: |

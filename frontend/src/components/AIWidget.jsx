@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getApiUrl } from '../api/client';
 import { NovaLogo } from './brand/NovaLogo';
@@ -11,10 +11,8 @@ import {
   Check,
   PanelLeft,
   SquarePen,
-  MessageSquare,
   Trash2,
   BookOpen,
-  AlertCircle,
   Pencil,
   Star,
   Search,
@@ -23,20 +21,47 @@ import {
   ArrowDown,
   Info,
   ShieldAlert,
-  ChevronRight,
   ExternalLink,
-  Sparkles,
-  Layers,
   Sun,
   Moon,
-  Minus,
-  Maximize2,
-  Minimize2,
-  Columns2
+  Minus
 } from 'lucide-react';
 
 const APP_NAME = 'Nova';
 const CONVERSATIONS_STORAGE_KEY = 'nova_clinical_conversations_v4';
+
+// Subject to Chapters mapping for clinical curriculum scoping
+const SUBJECT_CHAPTERS = {
+  'All': ['All chapters'],
+  'Anatomy': [
+    'All chapters',
+    'Cardiovascular Anatomy',
+    'Respiratory Anatomy',
+    'Musculoskeletal Anatomy',
+    'Neuroanatomy'
+  ],
+  'Physiology': [
+    'All chapters',
+    'Cardiovascular & Hemodynamic Physiology',
+    'Respiratory & Gas Exchange Physiology',
+    'Renal & Fluid Balance Physiology',
+    'Neurophysiology'
+  ],
+  'Clinical Biochemistry': [
+    'All chapters',
+    'Carbohydrate Metabolism & Clinical Disorders',
+    'Lipid Metabolism & Atherosclerosis',
+    'Protein & Amino Acid Metabolism',
+    'Acid-Base & Clinical Enzymes'
+  ],
+  'Applied Nutrition': [
+    'All chapters',
+    'Enteral & Parenteral Clinical Nutrition',
+    'Macronutrient Deficiencies & PEM',
+    'Micronutrient & Mineral Disorders',
+    'Therapeutic Diets in Critical Illness'
+  ]
+};
 
 // 4 Suggested prompt cards for the Claude-style home state
 const PROMPT_SUGGESTIONS = [
@@ -69,8 +94,12 @@ const PROMPT_SUGGESTIONS = [
 // Helper: Strip emojis for clean clinical typography
 const stripEmojis = (str) => (str ? str.replace(/[\u{1F300}-\u{1FAFF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '') : '');
 
+// Safe unique ID generator for user actions (outside pure render)
+const generateId = (prefix) => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
 // Formats relative time groups (Today, Yesterday, Previous 7 days, Older)
 const getRelativeDateGroup = (timestamp) => {
+  if (!timestamp) return 'Older';
   const date = new Date(timestamp);
   const now = new Date();
   const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
@@ -121,26 +150,40 @@ const renderInlineMarkdown = (text, isDark = false) => {
   });
 };
 
-// Markdown block renderer supporting headings, bullet lists, tables, and paragraphs
+// Markdown block renderer supporting headings, bullet lists, ordered lists, blockquotes, and paragraphs
 const MarkdownRenderer = ({ content, isDark = false }) => {
   if (!content) return null;
   const lines = content.split('\n');
   const elements = [];
   let inList = false;
+  let isOrdered = false;
   let listItems = [];
 
   const flushList = () => {
     if (inList && listItems.length > 0) {
-      elements.push(
-        <ul key={`list-${elements.length}`} className="my-2 space-y-1.5 pl-4 list-disc marker:text-[#159A91]">
-          {listItems.map((item, i) => (
-            <li key={i} className="text-sm leading-relaxed">
-              {renderInlineMarkdown(item, isDark)}
-            </li>
-          ))}
-        </ul>
-      );
+      if (isOrdered) {
+        elements.push(
+          <ol key={`ol-${elements.length}`} className="my-2 space-y-1.5 pl-5 list-decimal marker:text-[#159A91] marker:font-semibold">
+            {listItems.map((item, i) => (
+              <li key={i} className="text-sm leading-relaxed">
+                {renderInlineMarkdown(item, isDark)}
+              </li>
+            ))}
+          </ol>
+        );
+      } else {
+        elements.push(
+          <ul key={`ul-${elements.length}`} className="my-2 space-y-1.5 pl-4 list-disc marker:text-[#159A91]">
+            {listItems.map((item, i) => (
+              <li key={i} className="text-sm leading-relaxed">
+                {renderInlineMarkdown(item, isDark)}
+              </li>
+            ))}
+          </ul>
+        );
+      }
       inList = false;
+      isOrdered = false;
       listItems = [];
     }
   };
@@ -169,9 +212,27 @@ const MarkdownRenderer = ({ content, isDark = false }) => {
           {renderInlineMarkdown(line.slice(4), isDark)}
         </h3>
       );
+    } else if (line.startsWith('> ')) {
+      flushList();
+      elements.push(
+        <blockquote key={i} className={`my-2 pl-3 border-l-2 border-[#159A91] italic text-sm ${isDark ? 'text-neutral-300' : 'text-neutral-600'}`}>
+          {renderInlineMarkdown(line.slice(2), isDark)}
+        </blockquote>
+      );
     } else if (line.startsWith('- ') || line.startsWith('* ') || line.startsWith('• ')) {
-      inList = true;
+      if (!inList || isOrdered) {
+        flushList();
+        inList = true;
+        isOrdered = false;
+      }
       listItems.push(line.replace(/^[-*•]\s+/, ''));
+    } else if (/^\d+\.\s+/.test(line)) {
+      if (!inList || !isOrdered) {
+        flushList();
+        inList = true;
+        isOrdered = true;
+      }
+      listItems.push(line.replace(/^\d+\.\s+/, ''));
     } else if (line.length === 0) {
       flushList();
     } else {
@@ -196,54 +257,74 @@ export default function AIWidget() {
   const [windowMode, setWindowMode] = useState(() => {
     try {
       return localStorage.getItem('nova_window_mode') || 'normal';
-    } catch {
-      return 'normal';
-    }
+    } catch { /* ignore */ }
   });
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     try {
       const mode = localStorage.getItem('nova_window_mode') || 'normal';
       return mode !== 'normal';
-    } catch {
-      return false;
-    }
+    } catch { /* ignore */ }
   });
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    try {
+      const savedTheme = localStorage.getItem('nova_theme');
+      if (savedTheme) return savedTheme === 'dark';
+      return document.documentElement.classList.contains('dark') ||
+        (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches);
+    } catch { /* ignore */ }
+  });
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSetWindowMode = (mode) => {
     setWindowMode(mode);
     try {
       localStorage.setItem('nova_window_mode', mode);
-    } catch {}
+    } catch { /* ignore */ }
     if (mode === 'normal') {
       setSidebarOpen(false);
     }
   };
+
+  const handleToggleTheme = useCallback(() => {
+    setIsDark((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('nova_theme', next ? 'dark' : 'light');
+        if (next) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
 
   // Curriculum Subject & Chapter Scope
   const [selectedSubject, setSelectedSubject] = useState('All');
   const [selectedChapter, setSelectedChapter] = useState('All chapters');
   const [allChapters, setAllChapters] = useState(true);
 
+  const handleSelectSubject = (subject) => {
+    setSelectedSubject(subject);
+    setSelectedChapter('All chapters');
+    setAllChapters(subject === 'All');
+  };
+
   // Active Chat & History State
   const [threads, setThreads] = useState(() => {
     try {
       const saved = localStorage.getItem(CONVERSATIONS_STORAGE_KEY);
       return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
+    } catch { /* ignore */ }
   });
 
   const [activeThreadId, setActiveThreadId] = useState(() => {
     try {
       const saved = localStorage.getItem(CONVERSATIONS_STORAGE_KEY);
       const parsed = saved ? JSON.parse(saved) : [];
-      return parsed[0]?.id || `thread_${Date.now()}`;
-    } catch {
-      return `thread_${Date.now()}`;
-    }
+      return parsed[0]?.id || 'thread_initial_001';
+    } catch { /* ignore */ }
   });
 
   const [editingThreadId, setEditingThreadId] = useState(null);
@@ -268,13 +349,15 @@ export default function AIWidget() {
   const abortControllerRef = useRef(null);
 
   // Active Thread
-  const activeThread = threads.find((t) => t.id === activeThreadId) || {
-    id: activeThreadId,
-    title: 'New chat',
-    messages: [],
-    starred: false,
-    createdAt: Date.now()
-  };
+  const activeThread = useMemo(() => {
+    return threads.find((t) => t.id === activeThreadId) || {
+      id: activeThreadId,
+      title: 'New chat',
+      messages: [],
+      starred: false,
+      createdAt: 0
+    };
+  }, [threads, activeThreadId]);
 
   // Persist threads to localStorage
   useEffect(() => {
@@ -285,16 +368,41 @@ export default function AIWidget() {
     }
   }, [threads]);
 
+  // Toast feedback trigger
+  const triggerToast = useCallback((msg) => {
+    setFeedbackToast(msg);
+    setTimeout(() => setFeedbackToast(''), 2500);
+  }, []);
+
+  // Create New Chat (declared before useEffect to adhere to declaration order)
+  const handleNewChat = useCallback(() => {
+    const newId = generateId('thread');
+    const newThread = {
+      id: newId,
+      title: 'New chat',
+      messages: [],
+      starred: false,
+      createdAt: Date.now()
+    };
+    setThreads((prev) => [newThread, ...prev]);
+    setActiveThreadId(newId);
+    setStatusMessage('');
+    if (windowMode === 'normal') {
+      setSidebarOpen(false);
+    }
+    setTimeout(() => textareaRef.current?.focus(), 100);
+  }, [windowMode]);
+
   // Auto-scroll logic
-  const scrollToBottom = (behavior = 'smooth') => {
+  const scrollToBottom = useCallback((behavior = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior });
-  };
+  }, []);
 
   useEffect(() => {
     if (isStreaming) {
       scrollToBottom('auto');
     }
-  }, [activeThread.messages, isStreaming]);
+  }, [activeThread.messages, isStreaming, scrollToBottom]);
 
   // Handle scroll events for "Scroll to bottom" button
   const handleScroll = () => {
@@ -323,32 +431,7 @@ export default function AIWidget() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  // Toast feedback trigger
-  const triggerToast = (msg) => {
-    setFeedbackToast(msg);
-    setTimeout(() => setFeedbackToast(''), 2500);
-  };
-
-  // Create New Chat
-  const handleNewChat = () => {
-    const newId = `thread_${Date.now()}`;
-    const newThread = {
-      id: newId,
-      title: 'New chat',
-      messages: [],
-      starred: false,
-      createdAt: Date.now()
-    };
-    setThreads((prev) => [newThread, ...prev]);
-    setActiveThreadId(newId);
-    setStatusMessage('');
-    if (windowMode === 'normal') {
-      setSidebarOpen(false);
-    }
-    setTimeout(() => textareaRef.current?.focus(), 100);
-  };
+  }, [handleNewChat]);
 
   // Toggle Star / Pin on thread
   const handleToggleStar = (threadId, e) => {
@@ -378,14 +461,14 @@ export default function AIWidget() {
     setThreads((prev) => {
       const filtered = prev.filter((t) => t.id !== threadId);
       if (filtered.length === 0) {
-        const freshId = `thread_${Date.now()}`;
+        const freshId = generateId('thread');
         return [{ id: freshId, title: 'New chat', messages: [], starred: false, createdAt: Date.now() }];
       }
       return filtered;
     });
     if (activeThreadId === threadId) {
       const remaining = threads.filter((t) => t.id !== threadId);
-      setActiveThreadId(remaining[0]?.id || `thread_${Date.now()}`);
+      setActiveThreadId(remaining[0]?.id || generateId('thread'));
     }
     triggerToast('Chat deleted');
   };
@@ -401,7 +484,7 @@ export default function AIWidget() {
   };
 
   // Send message over SSE (/api/nova/chat)
-  const handleSendMessage = async (textToSend) => {
+  const handleSendMessage = useCallback(async (textToSend) => {
     const query = (textToSend || inputValue).trim();
     if (!query || isStreaming) return;
 
@@ -410,14 +493,15 @@ export default function AIWidget() {
       textareaRef.current.style.height = 'auto';
     }
 
-    const userMessageId = `msg_user_${Date.now()}`;
-    const assistantMessageId = `msg_asst_${Date.now()}`;
+    const nowTimestamp = Date.now();
+    const userMessageId = `msg_user_${nowTimestamp}`;
+    const assistantMessageId = `msg_asst_${nowTimestamp}`;
 
     const userMsg = {
       id: userMessageId,
       role: 'user',
       content: query,
-      timestamp: Date.now()
+      timestamp: nowTimestamp
     };
 
     const initialAssistantMsg = {
@@ -425,7 +509,7 @@ export default function AIWidget() {
       role: 'assistant',
       content: '',
       citations: [],
-      timestamp: Date.now(),
+      timestamp: nowTimestamp,
       isSpecialNotice: false,
       isNotFound: false
     };
@@ -542,9 +626,7 @@ export default function AIWidget() {
                 })
               );
             }
-          } catch {
-            // Partial frame ignored
-          }
+          } catch { /* ignore */ }
         }
       }
     } catch (err) {
@@ -572,7 +654,7 @@ export default function AIWidget() {
       setStatusMessage('');
       abortControllerRef.current = null;
     }
-  };
+  }, [inputValue, isStreaming, token, selectedSubject, selectedChapter, allChapters, activeThread, activeThreadId]);
 
   // Regenerate last response
   const handleRegenerate = () => {
@@ -604,9 +686,7 @@ export default function AIWidget() {
     try {
       await navigator.clipboard.writeText(text);
       triggerToast('Copied to clipboard');
-    } catch {
-      triggerToast('Failed to copy');
-    }
+    } catch { /* ignore */ }
   };
 
   // Auto-grow textarea
@@ -624,20 +704,24 @@ export default function AIWidget() {
     : '';
 
   // Filtered threads by search
-  const filteredThreads = threads.filter((t) =>
-    (t.title || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredThreads = useMemo(() => {
+    return threads.filter((t) =>
+      (t.title || '').toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [threads, searchQuery]);
 
-  const starredThreads = filteredThreads.filter((t) => t.starred);
-  const unstarredThreads = filteredThreads.filter((t) => !t.starred);
+  const starredThreads = useMemo(() => filteredThreads.filter((t) => t.starred), [filteredThreads]);
+  const unstarredThreads = useMemo(() => filteredThreads.filter((t) => !t.starred), [filteredThreads]);
 
   // Group unstarred threads by date
-  const groupedThreads = unstarredThreads.reduce((acc, t) => {
-    const group = getRelativeDateGroup(t.createdAt || Date.now());
-    if (!acc[group]) acc[group] = [];
-    acc[group].push(t);
-    return acc;
-  }, {});
+  const groupedThreads = useMemo(() => {
+    return unstarredThreads.reduce((acc, t) => {
+      const group = getRelativeDateGroup(t.createdAt || 0);
+      if (!acc[group]) acc[group] = [];
+      acc[group].push(t);
+      return acc;
+    }, {});
+  }, [unstarredThreads]);
 
   return (
     <>
@@ -667,7 +751,7 @@ export default function AIWidget() {
         >
           <div
             className={`flex w-full h-full ${
-              isDark ? 'bg-[#0B222E] text-neutral-100' : 'bg-[#FAFAFA] text-[#263746]'
+              isDark ? 'dark bg-[#0B222E] text-neutral-100' : 'bg-[#FAFAFA] text-[#263746]'
             } overflow-hidden shadow-2xl relative font-sans ${
               windowMode !== 'full' ? 'border-l border-neutral-200 dark:border-neutral-700/80' : ''
             }`}
@@ -875,7 +959,7 @@ export default function AIWidget() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setIsDark(!isDark)}
+                  onClick={handleToggleTheme}
                   className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-200/50 dark:hover:bg-neutral-800"
                   aria-label="Toggle Theme"
                 >
@@ -918,10 +1002,7 @@ export default function AIWidget() {
                         (sub) => (
                           <button
                             key={sub}
-                            onClick={() => {
-                              setSelectedSubject(sub);
-                              setAllChapters(sub === 'All');
-                            }}
+                            onClick={() => handleSelectSubject(sub)}
                             className={`px-2 py-0.5 rounded-lg font-medium transition-colors ${
                               selectedSubject === sub
                                 ? 'bg-white dark:bg-[#123B50] text-[#159A91] dark:text-[#20B8AE] shadow-xs'
@@ -1233,14 +1314,31 @@ export default function AIWidget() {
               <div className="p-4 sm:p-6 shrink-0 max-w-3xl w-full mx-auto">
                 <div className="relative rounded-2xl border border-neutral-300 dark:border-neutral-700/80 bg-white dark:bg-[#0F2D3D] shadow-sm focus-within:ring-2 focus-within:ring-[#159A91] focus-within:border-[#159A91] transition-all">
                   {/* Subject Scope Chip inside composer */}
-                  <div className="px-3.5 pt-2 flex items-center justify-between text-xs text-neutral-400">
-                    <div className="flex items-center gap-1.5">
+                  <div className="px-3.5 pt-2 flex items-center justify-between text-xs text-neutral-400 flex-wrap gap-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-semibold text-[#159A91] dark:text-[#20B8AE]">
                         Scope:
                       </span>
                       <span className="px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-[#0B222E] text-neutral-600 dark:text-neutral-300 font-medium">
                         {selectedSubject === 'All' ? 'All Nursing Subjects' : selectedSubject}
                       </span>
+                      {selectedSubject !== 'All' && (
+                        <select
+                          value={selectedChapter}
+                          onChange={(e) => {
+                            setSelectedChapter(e.target.value);
+                            setAllChapters(e.target.value === 'All chapters');
+                          }}
+                          aria-label="Filter chapter"
+                          className="px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-[#0B222E] text-neutral-600 dark:text-neutral-300 font-medium border-0 focus:ring-1 focus:ring-[#159A91] text-xs cursor-pointer"
+                        >
+                          {(SUBJECT_CHAPTERS[selectedSubject] || ['All chapters']).map((ch) => (
+                            <option key={ch} value={ch}>
+                              {ch}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
                     <span className="text-[11px] font-mono">
                       {inputValue.length} / 4000

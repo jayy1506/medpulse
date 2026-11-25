@@ -15,7 +15,7 @@ MedPulse pairs interactive multi-track curriculum visualizers (Applied Anatomy, 
 ## 📸 Platform Preview & Demos
 
 > [!TIP]
-> **Live Demo**: [https://medpulse-nursing.vercel.app](https://medpulse-nursing.vercel.app) *(or your deployed staging URL)*  
+> **Production Deployment (Render)**: Unified single-service full-stack deployment via `render.yaml`  
 > **Interactive API Docs (Swagger UI)**: [http://localhost:5000/api/docs](http://localhost:5000/api/docs)
 
 | Clinical Curriculum Hub | Interactive AI Clinical Tutor | Admin Telemetry & Ingestion |

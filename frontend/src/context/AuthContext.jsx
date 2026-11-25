@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
       const isRender = typeof window !== 'undefined' && window.location.hostname.includes('onrender.com');
       const hasBaseUrl = Boolean((import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '').trim());
       
-      // On static hosting (Vercel) without explicit backend URL, skip to prevent proxy 404/delays
+      // On production Render service or local dev, sync directly with backend
       if (!isLocal && !hasBaseUrl && !isRender) {
         return;
       }

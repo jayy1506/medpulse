@@ -189,66 +189,55 @@ if (frontendPublicPath) {
   app.use(express.static(frontendPublicPath, { maxAge: '7d' }));
 }
 
-// In production or cloud deployments: Serve frontend from frontend/dist or client_dist
-if (fs.existsSync(frontendDistPath)) {
-  logger.info({ path: frontendDistPath }, '[Production] Serving frontend static assets');
-  app.use(express.static(frontendDistPath, {
-    maxAge: '1d',
-    setHeaders: (res, filePath) => {
-      if (filePath.endsWith('index.html')) {
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      }
-    }
-  }));
+// Root API Info Route
+app.get('/api', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'MedPulse Medical & Nursing LMS Backend API is running.',
+    developer: 'Developed by Jay',
+    frontendUrl: process.env.CLIENT_URL || 'https://medpulse-h24h.onrender.com',
+    health: '/api/health',
+    docs: '/api/docs'
+  });
+});
 
-  app.get('*', (req, res, next) => {
-    if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/health')) {
-      return next();
-    }
-    const targetHtml = path.join(frontendDistPath, 'index.html');
-    if (fs.existsSync(targetHtml)) {
-      return res.sendFile(targetHtml);
-    }
-    const fallbackPath = candidateDistPaths.find(p => fs.existsSync(path.join(p, 'index.html')));
-    if (fallbackPath) {
-      return res.sendFile(path.join(fallbackPath, 'index.html'));
-    }
-    next();
-  });
-} else {
-  // Runtime resolver fallback if dist is detected
-  app.use((req, res, next) => {
-    if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/health')) {
-      return next();
-    }
-    const runtimeDist = candidateDistPaths.find(p => fs.existsSync(path.join(p, 'index.html')));
-    if (runtimeDist) {
-      if (req.path === '/' || !path.extname(req.path)) {
-        return res.sendFile(path.join(runtimeDist, 'index.html'));
-      }
-      return express.static(runtimeDist)(req, res, next);
-    }
-    next();
-  });
+// Helper to resolve an available index.html
+const resolveIndexHtml = () => {
+  const directPath = path.join(frontendDistPath, 'index.html');
+  if (fs.existsSync(directPath)) return directPath;
+  for (const candidate of candidateDistPaths) {
+    const candidateFile = path.join(candidate, 'index.html');
+    if (fs.existsSync(candidateFile)) return candidateFile;
+  }
+  return null;
+};
 
-  app.get('/', (req, res) => {
-    const runtimeDist = candidateDistPaths.find(p => fs.existsSync(path.join(p, 'index.html')));
-    if (runtimeDist) {
-      return res.sendFile(path.join(runtimeDist, 'index.html'));
-    }
-    res.status(200).json({
-      success: true,
-      message: 'MedPulse Medical & Nursing LMS Backend API is running.',
-      developer: 'Developed by Jay',
-      frontendUrl: process.env.CLIENT_URL || 'http://localhost:5173',
-      health: '/api/health',
-      docs: '/api/docs',
-      diagnostics: {
-        checkedCandidatePaths: candidateDistPaths
+// Mount static asset servers for any available dist directories
+candidateDistPaths.forEach((distPath) => {
+  if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath, {
+      maxAge: '1d',
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('index.html')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        }
       }
-    });
-  });
-}
+    }));
+  }
+});
+
+// Single Page Application (SPA) catch-all handler for all frontend routes
+app.get('*', (req, res, next) => {
+  if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/health')) {
+    return next();
+  }
+  const indexHtml = resolveIndexHtml();
+  if (indexHtml) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    return res.sendFile(indexHtml);
+  }
+  next();
+});
 
 // 404 Handler for unmatched API routes
 app.use('/api/*', (req, res) => {

@@ -96,7 +96,6 @@ app.use(helmet({
 const allowedOrigins = [
   process.env.CLIENT_URL,
   process.env.RENDER_EXTERNAL_URL,
-  'https://nursing-sepia-eta.vercel.app',
   ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5000', 'http://127.0.0.1:5000'] : [])
 ].filter(Boolean);
 

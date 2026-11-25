@@ -1,5 +1,14 @@
 // Resolve API endpoint against configured environment base URL
 export const getApiUrl = (endpoint = '') => {
+  // In production (Render unified deployment), always use relative same-origin path
+  const isRender = typeof window !== 'undefined' && window.location.hostname.includes('onrender.com');
+  const isProd = import.meta.env.PROD;
+  const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+  if ((isRender || isProd) && !isLocal) {
+    return endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  }
+
   const baseUrl = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '').trim().replace(/\/$/, '');
   if (!baseUrl) return endpoint;
   if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) return endpoint;

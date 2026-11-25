@@ -15,6 +15,31 @@ import { logger, reqLogger, initSentryHook } from './config/logger.js';
 
 dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const candidateDistPaths = [
+  path.resolve(__dirname, '../../frontend/dist'),
+  path.resolve(__dirname, '../client_dist'),
+  path.resolve(process.cwd(), 'frontend/dist'),
+  path.resolve(process.cwd(), 'backend/client_dist'),
+  path.resolve(process.cwd(), 'client_dist'),
+  path.resolve(process.cwd(), '../frontend/dist'),
+  path.resolve(__dirname, '../frontend/dist')
+];
+const frontendDistPath = candidateDistPaths.find(p => fs.existsSync(path.join(p, 'index.html')))
+  || candidateDistPaths.find(p => fs.existsSync(p))
+  || candidateDistPaths[0];
+
+const candidatePublicPaths = [
+  path.resolve(__dirname, '../../frontend/public'),
+  path.resolve(process.cwd(), 'frontend/public'),
+  path.resolve(process.cwd(), 'backend/../frontend/public'),
+  path.resolve(process.cwd(), '../frontend/public'),
+  path.resolve(__dirname, '../frontend/public')
+];
+const frontendPublicPath = candidatePublicPaths.find(p => fs.existsSync(p));
+const swaggerDocPath = path.resolve(__dirname, './docs/swagger.json');
+
 // ================= Production Safety Validations =================
 if (process.env.NODE_ENV === 'production') {
   if (process.env.ALLOW_DEV_AUTH === 'true' || process.env.MOCK_AUTH === 'true') {
@@ -38,26 +63,6 @@ if (process.env.NODE_ENV === 'production') {
     logger.info('[DEPLOYMENT] CLIENT_URL not set; defaulting to unified same-origin frontend serving for Render deployment.');
   }
 }
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const candidateDistPaths = [
-  path.resolve(__dirname, '../../frontend/dist'),
-  path.resolve(__dirname, '../client_dist'),
-  path.resolve(process.cwd(), 'frontend/dist'),
-  path.resolve(process.cwd(), 'client_dist'),
-  path.resolve(process.cwd(), '../frontend/dist'),
-  path.resolve(__dirname, '../frontend/dist')
-];
-const frontendDistPath = candidateDistPaths.find(p => fs.existsSync(p)) || candidateDistPaths[0];
-const candidatePublicPaths = [
-  path.resolve(__dirname, '../../frontend/public'),
-  path.resolve(process.cwd(), 'frontend/public'),
-  path.resolve(process.cwd(), '../frontend/public'),
-  path.resolve(__dirname, '../frontend/public')
-];
-const frontendPublicPath = candidatePublicPaths.find(p => fs.existsSync(p));
-const swaggerDocPath = path.resolve(__dirname, './docs/swagger.json');
 
 let swaggerDocument = {};
 if (fs.existsSync(swaggerDocPath)) {
@@ -184,7 +189,7 @@ if (frontendPublicPath) {
   app.use(express.static(frontendPublicPath, { maxAge: '7d' }));
 }
 
-// In production or cloud deployments: Serve frontend from frontend/dist
+// In production or cloud deployments: Serve frontend from frontend/dist or client_dist
 if (fs.existsSync(frontendDistPath)) {
   logger.info({ path: frontendDistPath }, '[Production] Serving frontend static assets');
   app.use(express.static(frontendDistPath, {
@@ -200,17 +205,47 @@ if (fs.existsSync(frontendDistPath)) {
     if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/health')) {
       return next();
     }
-    res.sendFile(path.join(frontendDistPath, 'index.html'));
+    const targetHtml = path.join(frontendDistPath, 'index.html');
+    if (fs.existsSync(targetHtml)) {
+      return res.sendFile(targetHtml);
+    }
+    const fallbackPath = candidateDistPaths.find(p => fs.existsSync(path.join(p, 'index.html')));
+    if (fallbackPath) {
+      return res.sendFile(path.join(fallbackPath, 'index.html'));
+    }
+    next();
   });
 } else {
+  // Runtime resolver fallback if dist is detected
+  app.use((req, res, next) => {
+    if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/health')) {
+      return next();
+    }
+    const runtimeDist = candidateDistPaths.find(p => fs.existsSync(path.join(p, 'index.html')));
+    if (runtimeDist) {
+      if (req.path === '/' || !path.extname(req.path)) {
+        return res.sendFile(path.join(runtimeDist, 'index.html'));
+      }
+      return express.static(runtimeDist)(req, res, next);
+    }
+    next();
+  });
+
   app.get('/', (req, res) => {
+    const runtimeDist = candidateDistPaths.find(p => fs.existsSync(path.join(p, 'index.html')));
+    if (runtimeDist) {
+      return res.sendFile(path.join(runtimeDist, 'index.html'));
+    }
     res.status(200).json({
       success: true,
       message: 'MedPulse Medical & Nursing LMS Backend API is running.',
       developer: 'Developed by Jay',
       frontendUrl: process.env.CLIENT_URL || 'http://localhost:5173',
       health: '/api/health',
-      docs: '/api/docs'
+      docs: '/api/docs',
+      diagnostics: {
+        checkedCandidatePaths: candidateDistPaths
+      }
     });
   });
 }

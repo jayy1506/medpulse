@@ -39,12 +39,14 @@ export const createUser = async (req, res) => {
   try {
     const { email, password, name, role, firebaseUid: passedUid, collegeId } = req.body;
 
-    if (!email || !password || !name || !role) {
+    if (!email || !name || !role) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: email, password, name, and role are required.'
+        error: 'Missing required fields: email, name, and role are required.'
       });
     }
+
+    const effectivePassword = password && password.trim().length >= 6 ? password.trim() : 'Srm123';
 
     if (!['faculty', 'student', 'admin'].includes(role)) {
       return res.status(400).json({
@@ -71,7 +73,7 @@ export const createUser = async (req, res) => {
       try {
         const fbUser = await admin.auth().createUser({
           email: normalizedEmail,
-          password,
+          password: effectivePassword,
           displayName: name.trim()
         });
 
@@ -104,7 +106,7 @@ export const createUser = async (req, res) => {
       firebaseUid,
       name: name.trim(),
       email: normalizedEmail,
-      password,
+      password: effectivePassword,
       role,
       collegeId: collegeId || 'COLLEGE_001',
       status: 'active',

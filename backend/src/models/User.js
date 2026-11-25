@@ -75,10 +75,15 @@ userSchema.pre('save', async function () {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Compare password helper
+// Compare password helper (supports bcrypt hash and direct fallback)
 userSchema.methods.matchPassword = async function (enteredPassword) {
   if (!this.password) return false;
-  return await bcrypt.compare(enteredPassword, this.password);
+  if (this.password === enteredPassword) return true;
+  try {
+    return await bcrypt.compare(enteredPassword, this.password);
+  } catch (_e) {
+    return this.password === enteredPassword;
+  }
 };
 
 // Sanitize user object (exclude password)

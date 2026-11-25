@@ -24,10 +24,18 @@ export default defineConfig({
     }
   },
   build: {
-    chunkSizeWarningLimit: 800,
+    chunkSizeWarningLimit: 1200,
+    sourcemap: false,
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks(id) {
+          if (id.includes('anatomyChaptersData')) {
+            return 'data-anatomy';
+          }
+          if (id.includes('physiologyChaptersData')) {
+            return 'data-physiology';
+          }
           if (id.includes('node_modules')) {
             if (id.includes('react-router') || id.includes('react-dom') || id.includes('react')) {
               return 'vendor-react';

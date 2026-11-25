@@ -1,6 +1,7 @@
 {
   "name": "nursing-lms-backend",
   "version": "1.0.0",
+  "private": true,
   "description": "Backend API for Role-Based Nursing LMS with Assessment Gating & Scoped RAG Chatbot",
   "author": "Jay",
   "main": "src/server.js",

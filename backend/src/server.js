@@ -41,7 +41,13 @@ if (process.env.NODE_ENV === 'production') {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
+const candidateDistPaths = [
+  path.resolve(__dirname, '../../frontend/dist'),
+  path.resolve(process.cwd(), 'frontend/dist'),
+  path.resolve(process.cwd(), '../frontend/dist'),
+  path.resolve(__dirname, '../frontend/dist')
+];
+const frontendDistPath = candidateDistPaths.find(p => fs.existsSync(p)) || candidateDistPaths[0];
 const swaggerDocPath = path.resolve(__dirname, './docs/swagger.json');
 
 let swaggerDocument = {};

@@ -16,6 +16,7 @@
     "build": "npm install --include=dev --prefix frontend && npm run build --prefix frontend",
     "build:frontend": "npm install --include=dev --prefix frontend && npm run build --prefix frontend",
     "render-build": "npm install && npm install --include=dev --prefix frontend && npm run build --prefix frontend",
+    "postinstall": "npm run build:frontend",
     "start": "node backend/src/server.js",
     "seed": "npm run seed --prefix backend",
     "eval:nova": "node eval/nova_eval.js",

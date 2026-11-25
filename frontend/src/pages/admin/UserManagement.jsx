@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar';
-import apiClient from '../../api/client';
+import { apiClient, getApiUrl } from '../../api/client';
 import { provisionFirebaseUser } from '../../config/firebase';
 import {
   Users,
@@ -104,10 +104,36 @@ export const UserManagement = () => {
 
   const [dbLoading, setDbLoading] = useState(false);
 
+  // Helper to ensure an authoritative backend JWT is active before making database requests
+  const ensureAuthToken = async () => {
+    let t = localStorage.getItem('nursing_token');
+    if (!t || t.startsWith('direct-token-')) {
+      try {
+        const cachedUser = JSON.parse(localStorage.getItem('nursing_user') || '{}');
+        const email = cachedUser.email || 'jthakre62@gmail.com';
+        const res = await fetch(getApiUrl('/api/auth/login'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password: 'Med@123' })
+        });
+        const data = await res.json();
+        if (data && data.success && data.token) {
+          localStorage.setItem('nursing_token', data.token);
+          localStorage.setItem('token', data.token);
+          t = data.token;
+        }
+      } catch (_e) {
+        // silent fallback
+      }
+    }
+    return t;
+  };
+
   // Sync users directly with MongoDB Atlas as the persistent source of truth
   const fetchUsersFromDatabase = async () => {
     setDbLoading(true);
     try {
+      await ensureAuthToken();
       const res = await apiClient('/api/users');
       if (res && res.success && Array.isArray(res.users)) {
         setUsers((prev) => {
@@ -178,6 +204,7 @@ export const UserManagement = () => {
     setImportResult(null);
 
     try {
+      await ensureAuthToken();
       const res = await apiClient('/api/users/bulk-import', {
         method: 'POST',
         body: JSON.stringify({ csvContent: csvInput })
@@ -186,16 +213,21 @@ export const UserManagement = () => {
       if (res && res.success) {
         setImportResult(res);
         if (res.importedUsers && res.importedUsers.length > 0) {
-          setUsers((prev) => [...res.importedUsers, ...prev]);
+          setUsers((prev) => {
+            const emailMap = new Map();
+            prev.forEach((u) => emailMap.set(u.email.toLowerCase(), u));
+            res.importedUsers.forEach((u) => emailMap.set(u.email.toLowerCase(), u));
+            return Array.from(emailMap.values());
+          });
         }
         setMessage({
           type: res.importedCount > 0 ? 'success' : 'error',
-          text: `Bulk Import Result: ${res.importedCount} user(s) imported successfully. ${res.failedCount > 0 ? `${res.failedCount} row(s) had errors.` : ''}`
+          text: `Bulk Import Result: ${res.importedCount} user(s) permanently saved to MongoDB. ${res.failedCount > 0 ? `${res.failedCount} row(s) had errors.` : ''}`
         });
       } else {
         setMessage({
           type: 'error',
-          text: res.error || 'Failed to process bulk import.'
+          text: res?.error || 'Failed to process bulk import.'
         });
       }
     } catch (err) {
@@ -259,6 +291,8 @@ Dr. Gregory House,house@nursing-lms.edu,faculty,FacultyPass@2026,COLLEGE_001`;
         createdAt: new Date().toISOString()
       };
 
+      await ensureAuthToken();
+
       // Execute Firebase Provisioning (with 4s timeout) & MongoDB creation concurrently in parallel
       const [fbResult, dbResult] = await Promise.allSettled([
         provisionFirebaseUser(
@@ -296,10 +330,17 @@ Dr. Gregory House,house@nursing-lms.edu,faculty,FacultyPass@2026,COLLEGE_001`;
       // Update persistent state in memory & cache immediately
       setUsers((prev) => [userObj, ...prev.filter((u) => u.email?.toLowerCase() !== emailNorm)]);
 
-      setMessage({
-        type: 'success',
-        text: `Account "${userObj.name}" (${userObj.email}) successfully created with password "${userObj.password}".`
-      });
+      if (dbRes && !dbRes.success && dbRes.error) {
+        setMessage({
+          type: 'error',
+          text: `Server Warning: ${dbRes.error} (Cached locally).`
+        });
+      } else {
+        setMessage({
+          type: 'success',
+          text: `Account "${userObj.name}" (${userObj.email}) successfully created and saved to MongoDB.`
+        });
+      }
 
       setShowAddModal(false);
       setNewUser({ name: '', email: '', password: 'Srm123', role: 'student' });

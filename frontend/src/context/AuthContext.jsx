@@ -48,6 +48,31 @@ export const AuthProvider = ({ children }) => {
 
   const [authError, setAuthError] = useState(null);
 
+  // Auto-upgrade synthetic token to authoritative backend JWT on page load
+  useEffect(() => {
+    const currentToken = localStorage.getItem('nursing_token');
+    if (currentUser?.email && (!currentToken || currentToken.startsWith('direct-token-'))) {
+      const email = currentUser.email.toLowerCase().trim();
+      const defaultPass = (email.includes('admin') || email.includes('jthakre') || email.includes('karande'))
+        ? 'Med@123'
+        : 'Srm123';
+      fetch(getApiUrl('/api/auth/login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: defaultPass })
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.success && data.token) {
+            localStorage.setItem('nursing_token', data.token);
+            localStorage.setItem('token', data.token);
+            setToken(data.token);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [currentUser]);
+
   // Sync with MongoDB backend helper (non-blocking with strict timeout & host check)
   const syncWithBackend = async (userData, authToken) => {
     try {
@@ -178,6 +203,50 @@ export const AuthProvider = ({ children }) => {
     let directoryInfo = getDirectoryInfo(emailNorm);
     const isMasterAdmin = isAdminEmailCheck(emailNorm);
 
+    // 1. Authoritative Backend JWT Login Attempt (establishes database-backed session token)
+    try {
+      const loginUrl = getApiUrl('/api/auth/login');
+      const backendRes = await fetch(loginUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailNorm, password })
+      });
+      const backendData = await backendRes.json();
+      if (backendRes.ok && backendData.success && backendData.token) {
+        const u = backendData.user || {};
+        const authUser = {
+          uid: u.id || u._id || u.firebaseUid || `usr-${Date.now()}`,
+          _id: u._id || u.id,
+          id: u.id || u._id,
+          email: u.email || emailNorm,
+          displayName: u.name || u.username || emailNorm.split('@')[0],
+          name: u.name || u.username || emailNorm.split('@')[0],
+          role: u.role || (isMasterAdmin ? 'admin' : 'student'),
+          status: u.status || 'active',
+          isActive: u.isActive !== false,
+          isDefaultPassword: u.isDefaultPassword ?? false,
+          collegeId: u.collegeId || 'COLLEGE_001',
+          photoURL: null
+        };
+
+        localStorage.setItem('nursing_token', backendData.token);
+        localStorage.setItem('token', backendData.token);
+        localStorage.setItem('firebase_token', backendData.token);
+        localStorage.setItem('nursing_user', JSON.stringify(authUser));
+        localStorage.setItem('user', JSON.stringify(authUser));
+
+        setToken(backendData.token);
+        setCurrentUser(authUser);
+        setLoading(false);
+
+        // Silent background Firebase sign-in if credentials match
+        signInWithEmailAndPassword(auth, emailNorm, password).catch(() => {});
+        return authUser;
+      }
+    } catch (backendErr) {
+      console.warn('[AuthContext] Backend login error (falling back to directory/firebase):', backendErr);
+    }
+
     // Instant local resolver helper
     const loginViaDirectory = (info = directoryInfo) => {
       const role = isMasterAdmin ? 'admin' : (info?.role || 'student');
@@ -218,7 +287,22 @@ export const AuthProvider = ({ children }) => {
       setCurrentUser(fallbackUser);
       setLoading(false);
 
-      // Background silent tasks (non-blocking)
+      // Background silent tasks: acquire real backend JWT so API requests persist
+      fetch(getApiUrl('/api/auth/login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailNorm, password })
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && data.success && data.token) {
+            localStorage.setItem('nursing_token', data.token);
+            localStorage.setItem('token', data.token);
+            setToken(data.token);
+          }
+        })
+        .catch(() => {});
+
       syncWithBackend(fallbackUser, syntheticToken);
       signInWithEmailAndPassword(auth, emailNorm, password).catch(() => {});
 

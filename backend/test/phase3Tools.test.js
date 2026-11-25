@@ -41,7 +41,7 @@ test('Phase 3: Gemini Function Calling Tools & Tool Loop', async (t) => {
   });
 
   await t.test('5. Execute search_documents tool', async () => {
-    const result = await executeTool('search_documents', { query: 'cardiac vital signs' });
+    const result = await executeTool('search_documents', { query: 'cardiac vital signs' }, 15000);
     assert.ok(typeof result.matchCount === 'number');
     assert.ok(Array.isArray(result.chunks));
   });

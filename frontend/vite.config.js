@@ -24,6 +24,7 @@ export default defineConfig({
     }
   },
   build: {
+    copyPublicDir: false,
     chunkSizeWarningLimit: 1200,
     sourcemap: false,
     minify: 'esbuild',

@@ -48,6 +48,13 @@ const candidateDistPaths = [
   path.resolve(__dirname, '../frontend/dist')
 ];
 const frontendDistPath = candidateDistPaths.find(p => fs.existsSync(p)) || candidateDistPaths[0];
+const candidatePublicPaths = [
+  path.resolve(__dirname, '../../frontend/public'),
+  path.resolve(process.cwd(), 'frontend/public'),
+  path.resolve(process.cwd(), '../frontend/public'),
+  path.resolve(__dirname, '../frontend/public')
+];
+const frontendPublicPath = candidatePublicPaths.find(p => fs.existsSync(p));
 const swaggerDocPath = path.resolve(__dirname, './docs/swagger.json');
 
 let swaggerDocument = {};
@@ -169,6 +176,11 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/conversations', conversationRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/nova', novaRoutes);
+
+// Serve public assets (images, icons, svgs) directly from frontend/public to save build memory
+if (frontendPublicPath) {
+  app.use(express.static(frontendPublicPath, { maxAge: '7d' }));
+}
 
 // In production or cloud deployments: Serve frontend from frontend/dist
 if (fs.existsSync(frontendDistPath)) {

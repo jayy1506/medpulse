@@ -20,7 +20,7 @@
     "medpulse-workspace": "file:..",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.10.1",
+    "react-router-dom": "^7.18.6",
     "tailwindcss": "^4.1.17",
     "three": "^0.187.0"
   },

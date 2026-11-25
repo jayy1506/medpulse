@@ -1,0 +1,513 @@
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import Navbar from "../../../components/Navbar";
+import { ArrowRight, ClipboardList } from "lucide-react";
+import { SubtopicMedicalPlate } from "../../../components/curriculum/SubtopicMedicalPlate";
+import { SubtopicQuiz15Marks } from "../../../components/curriculum/SubtopicQuiz15Marks";
+import { SubtopicNavFooter } from "../../../components/curriculum/SubtopicNavFooter";
+import { UNIT_2_LIPID_SUBTOPICS } from "../../../constants/biochemistryLessonsData";
+
+const EssentialFattyAcids = () => {
+  const [theme, setTheme] = useState("light");
+  const isDark = theme === "dark";
+
+  const toggleTheme = () =>
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+
+  const pageVariants = {
+    hidden: { opacity: 0, y: 24 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, ease: "easeOut" },
+    },
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 16 },
+    visible: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay: 0.1 * i, duration: 0.35, ease: "easeOut" },
+    }),
+  };
+
+  return (
+    <div
+      className={`min-h-screen transition-colors duration-300 ${
+        isDark ? "bg-neutral-950 text-neutral-50" : "bg-neutral-50 text-neutral-900"
+      }`}
+    >
+      {/* Navbar at top */}
+      <Navbar />
+
+      {/* Top Back Navigation Bar */}
+      <div className={`border-b py-2.5 px-4 sm:px-6 lg:px-8 ${isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'}`}>
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Link
+            to="/bio-chem-syllabus"
+            className="inline-flex items-center gap-2 text-xs font-bold text-green-700 hover:text-green-700 transition-colors cursor-pointer group"
+          >
+            <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
+            <span>Back to Full Syllabus</span>
+          </Link>
+          <div className="flex items-center gap-2 text-[11px] font-semibold text-neutral-400">
+            <span>Unit 2: Lipids & Fatty Acids</span>
+            <span>/</span>
+            <span className="text-green-700">Lesson 4 of 4 (Final Lesson)</span>
+          </div>
+        </div>
+      </div>
+
+      <motion.div
+        className="mx-auto max-w-6xl px-4 pb-16 pt-4 sm:px-6 lg:px-8 lg:pt-6"
+        variants={pageVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* Top bar / title */}
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-green-500">
+              Biochemistry • Lipid metabolism
+            </p>
+            <h1 className="mt-1 text-2xl font-bold sm:text-3xl lg:text-4xl">
+              Essential Fatty Acids (EFA)
+            </h1>
+            <p
+              className={`mt-2 text-sm sm:text-base ${
+                isDark ? "text-neutral-300" : "text-neutral-600"
+              }`}
+            >
+              Definition, main examples, physiological roles, and clinical
+              importance of essential fatty acids.
+            </p>
+          </div>
+
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+              isDark
+                ? "border-neutral-600 bg-neutral-900 text-neutral-100 hover:border-green-400"
+                : "border-neutral-200 bg-white text-neutral-800 hover:border-neutral-300"
+            }`}
+          >
+            <span
+              className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${
+                isDark ? "bg-neutral-800" : "bg-neutral-100"
+              }`}
+            >
+              {isDark ? "🌙" : "☀️"}
+            </span>
+            {isDark ? "Dark mode" : "Light mode"}
+          </button>
+        </div>
+
+        {/* Hero: definition + quick map */}
+        <section
+          className={`grid gap-6 rounded-3xl border p-5 shadow-sm md:grid-cols-[3fr,2fr] ${
+            isDark
+              ? "border-neutral-700 bg-neutral-900/70"
+              : "border-neutral-200 bg-white"
+          }`}
+        >
+          <div className="flex flex-col justify-center">
+            <h2 className="text-lg font-semibold sm:text-xl">Definition</h2>
+            <p
+              className={`mt-2 text-sm sm:text-base ${
+                isDark ? "text-neutral-300" : "text-neutral-700"
+              }`}
+            >
+              Essential fatty acids are polyunsaturated fatty acids that humans
+              cannot synthesise in adequate amounts because the enzymes needed
+              to introduce double bonds beyond carbon 9–10 are absent; they must
+              therefore be obtained from the diet.
+            </p>
+
+            <div className="mt-4 grid gap-3 text-xs sm:grid-cols-3 sm:text-sm">
+              <div
+                className={`rounded-2xl p-3 ${
+                  isDark ? "bg-neutral-800/80" : "bg-green-50"
+                }`}
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-green-500">
+                  Human EFA
+                </p>
+                <p>Linoleic acid (LA, 18:2 n‑6) and α‑linolenic acid (ALA, 18:3 n‑3).</p>
+              </div>
+              <div
+                className={`rounded-2xl p-3 ${
+                  isDark ? "bg-neutral-800/80" : "bg-neutral-100"
+                }`}
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-green-700">
+                  Derived long‑chain PUFA
+                </p>
+                <p>Arachidonic acid (AA), EPA, DHA formed from LA and ALA.</p>
+              </div>
+              <div
+                className={`rounded-2xl p-3 ${
+                  isDark ? "bg-neutral-800/80" : "bg-neutral-100"
+                }`}
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-neutral-800">
+                  Key roles
+                </p>
+                <p>Membrane structure, eicosanoids, brain and visual function.</p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className={`rounded-2xl border text-xs sm:text-sm ${
+              isDark
+                ? "border-neutral-700 bg-neutral-900/80 text-neutral-200"
+                : "border-neutral-200 bg-neutral-50 text-neutral-700"
+            }`}
+          >
+            <div className="border-b px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-green-500 border-neutral-700/60">
+              Concept snapshot
+            </div>
+            <div className="p-4 space-y-2">
+              <p>• Cannot be made de novo in humans.</p>
+              <p>• Must come from diet (plant oils, nuts, fish etc.).</p>
+              <p>• Precursors of important signalling molecules (eicosanoids).</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Section Medical Plate */}
+        <SubtopicMedicalPlate
+          subtopicId="essential-fatty-acids"
+          subtopicTitle="Essential Fatty Acids & Metabolism"
+          subject="biochemistry"
+        />
+
+        {/* Content layout: main concepts + side recap */}
+        <div className="mt-8 grid gap-6 lg:grid-cols-[3fr,2fr]">
+          {/* Left: teaching blocks */}
+          <div className="space-y-6">
+            {/* 1. Main examples and sources */}
+            <motion.section
+              custom={0}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              className={`rounded-3xl p-5 shadow-sm ${
+                isDark
+                  ? "border border-neutral-700 bg-neutral-900/80"
+                  : "border border-neutral-200 bg-white"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-lg font-semibold">
+                  1. Main essential fatty acids and dietary sources
+                </h2>
+                <span className="rounded-full bg-green-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-green-500">
+                  examples
+                </span>
+              </div>
+
+              <p
+                className={`mt-3 text-sm ${
+                  isDark ? "text-neutral-300" : "text-neutral-700"
+                }`}
+              >
+                Only two fatty acids are strictly essential in humans; others
+                become “conditionally essential” when synthesis from these
+                precursors is insufficient.
+              </p>
+
+              <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                <div
+                  className={`rounded-2xl p-3 ${
+                    isDark ? "bg-neutral-800/80" : "bg-neutral-100"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-800">
+                    Linoleic acid (LA, 18:2 n‑6)
+                  </p>
+                  <ul className="mt-1 space-y-1 list-disc pl-4">
+                    <li>Omega‑6 essential fatty acid.</li>
+                    <li>
+                      Major dietary sources: many vegetable oils (sunflower,
+                      safflower, corn, soybean), nuts and seeds.
+                    </li>
+                    <li>
+                      Precursor of longer‑chain omega‑6 PUFA such as arachidonic
+                      acid.
+                    </li>
+                  </ul>
+                </div>
+
+                <div
+                  className={`rounded-2xl p-3 ${
+                    isDark ? "bg-neutral-800/80" : "bg-neutral-100"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-green-700">
+                    α‑Linolenic acid (ALA, 18:3 n‑3)
+                  </p>
+                  <ul className="mt-1 space-y-1 list-disc pl-4">
+                    <li>Omega‑3 essential fatty acid.</li>
+                    <li>
+                      Major dietary sources: flaxseed and chia seed, walnuts,
+                      canola and soybean oils, some green leafy vegetables.
+                    </li>
+                    <li>
+                      Precursor for EPA and DHA, though conversion is limited in
+                      humans.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl bg-green-500/5 p-3 text-xs">
+                <p className="font-semibold text-green-500">
+                  Conditionally essential (concept)
+                </p>
+                <p className="mt-1">
+                  Arachidonic acid (AA), EPA, and DHA can become conditionally
+                  essential in situations where endogenous synthesis from LA or
+                  ALA is inadequate (for example, prematurity, certain diseases).
+                </p>
+              </div>
+            </motion.section>
+
+            {/* 2. Physiological roles */}
+            <motion.section
+              custom={1}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              className={`rounded-3xl p-5 shadow-sm ${
+                isDark
+                  ? "border border-neutral-700 bg-neutral-900/80"
+                  : "border border-neutral-200 bg-white"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-lg font-semibold">
+                  2. Physiological roles and functions
+                </h2>
+                <span className="rounded-full bg-green-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-green-700">
+                  what they do
+                </span>
+              </div>
+
+              <p
+                className={`mt-3 text-sm ${
+                  isDark ? "text-neutral-300" : "text-neutral-700"
+                }`}
+              >
+                Essential fatty acids are incorporated into cell membranes and
+                serve as precursors of signalling molecules with wide‑ranging
+                effects.
+              </p>
+
+              <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                <div
+                  className={`rounded-2xl p-3 ${
+                    isDark ? "bg-neutral-800/80" : "bg-green-50"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-green-500">
+                    Structural and functional roles
+                  </p>
+                  <ul className="mt-1 space-y-1 list-disc pl-4">
+                    <li>
+                      Maintain membrane fluidity and permeability, especially in
+                      brain and retina phospholipids.
+                    </li>
+                    <li>
+                      Influence activity of membrane proteins, receptors, and
+                      transporters.
+                    </li>
+                    <li>
+                      Important for normal growth, neural development, and
+                      visual function.
+                    </li>
+                  </ul>
+                </div>
+
+                <div
+                  className={`rounded-2xl p-3 ${
+                    isDark ? "bg-neutral-800/80" : "bg-neutral-100"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-800">
+                    Precursors of eicosanoids and other mediators
+                  </p>
+                  <ul className="mt-1 space-y-1 list-disc pl-4">
+                    <li>
+                      Arachidonic acid (from LA) and EPA (from ALA) give rise to
+                      prostaglandins, leukotrienes, and related mediators.
+                    </li>
+                    <li>
+                      These mediators modulate inflammation, platelet function,
+                      vascular tone, and many other processes.
+                    </li>
+                    <li>
+                      Balance of omega‑6‑ and omega‑3‑derived mediators
+                      influences pro‑ and anti‑inflammatory responses.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </motion.section>
+
+            {/* 3. Clinical importance and deficiency */}
+            <motion.section
+              custom={2}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              className={`rounded-3xl p-5 shadow-sm ${
+                isDark
+                  ? "border border-neutral-700 bg-neutral-900/80"
+                  : "border border-neutral-200 bg-white"
+              }`}
+            >
+              <h2 className="text-lg font-semibold">
+                3. Clinical importance and deficiency (exam‑style points)
+              </h2>
+              <p
+                className={`mt-3 text-sm ${
+                  isDark ? "text-neutral-300" : "text-neutral-700"
+                }`}
+              >
+                Adequate intake of essential fatty acids supports skin integrity,
+                growth, cardiovascular health, and brain function, whereas
+                deficiency produces characteristic signs.
+              </p>
+
+              <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                <div
+                  className={`rounded-2xl p-3 ${
+                    isDark ? "bg-neutral-800/80" : "bg-neutral-100"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-black dark:text-white">
+                    Deficiency features (especially in infants / severe
+                    malnutrition)
+                  </p>
+                  <ul className="mt-1 space-y-1 list-disc pl-4">
+                    <li>Dry, scaly dermatitis and impaired skin barrier.</li>
+                    <li>Poor wound healing and increased susceptibility to infection.</li>
+                    <li>Poor growth and developmental issues in children.</li>
+                    <li>
+                      In severe cases, thrombocytopenia and other laboratory
+                      abnormalities may appear.
+                    </li>
+                  </ul>
+                </div>
+
+                <div
+                  className={`rounded-2xl p-3 ${
+                    isDark ? "bg-neutral-800/80" : "bg-green-50"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-green-500">
+                    Broader clinical relevance
+                  </p>
+                  <ul className="mt-1 space-y-1 list-disc pl-4">
+                    <li>
+                      Adequate omega‑3 intake is linked with reduced
+                      cardiovascular risk and may support cognitive and mental
+                      health.
+                    </li>
+                    <li>
+                      Parenteral and enteral nutrition formulas must include
+                      essential fatty acids to prevent deficiency in
+                      long‑term‑fed patients.
+                    </li>
+                    <li>
+                      Diets extremely low in fat or lacking plant oils/fish can
+                      precipitate deficiency over time.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </motion.section>
+          </div>
+
+          {/* Right: recap / exam focus sidebar */}
+          <motion.aside
+            custom={3}
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            className={`h-fit rounded-3xl p-5 shadow-sm ${
+              isDark
+                ? "border border-neutral-700 bg-neutral-900/80"
+                : "border border-neutral-200 bg-white"
+            }`}
+          >
+            <h2 className="text-lg font-semibold">Exam‑oriented summary</h2>
+            <ul
+              className={`mt-3 space-y-2 text-sm ${
+                isDark ? "text-neutral-200" : "text-neutral-700"
+              }`}
+            >
+              <li>
+                1. Definition: dietary PUFA that humans cannot synthesise (LA and
+                ALA).
+              </li>
+              <li>
+                2. Examples: LA → omega‑6 series (including arachidonic acid);
+                ALA → omega‑3 series (EPA, DHA).
+              </li>
+              <li>
+                3. Functions: membrane structure, growth and development,
+                precursors of eicosanoids and other lipid mediators.
+              </li>
+              <li>
+                4. Clinical importance: deficiency causes scaly dermatitis, poor
+                growth, and impaired healing; adequate intake contributes to
+                cardiovascular and neural health.
+              </li>
+            </ul>
+
+            <div className="mt-4 rounded-2xl bg-green-500/10 p-3 text-xs text-green-400">
+              <p className="font-semibold text-green-100">
+                Quick memory hook
+              </p>
+              <p className="mt-1">
+                “LA and ALA are essential for LIFE” – L for linoleic (n‑6), A
+                for α‑linolenic (n‑3), both vital for membranes and mediators.
+              </p>
+            </div>
+
+            <p className="mt-4 text-[11px] text-neutral-400">
+              Link this topic with PUFA, eicosanoids, and nutritional
+              recommendations for omega‑3 and omega‑6 intake.
+            </p>
+          </motion.aside>
+        </div>
+
+        {/* 15 Marks Subtopic Clinical Assessment */}
+        <div className="mt-10">
+          <SubtopicQuiz15Marks
+            subtopicId="essential-fatty-acids"
+            subtopicTitle="Essential Fatty Acids & Metabolism"
+            unitTitle="Unit 2: Lipids"
+          />
+        </div>
+
+        {/* Sequential Subtopic Navigation Footer */}
+        <SubtopicNavFooter
+          currentIndex={3}
+          totalCount={UNIT_2_LIPID_SUBTOPICS.length}
+          prevSubtopic={{ title: "Polyunsaturated Fatty Acids (PUFA)", path: "/PUFA" }}
+          nextSubtopic={{ title: "Unit 3: Protein Structure & Denaturation", path: "/biochemistry/lesson/protein-structure-denaturation" }}
+          subtopics={UNIT_2_LIPID_SUBTOPICS}
+          syllabusPath="/bio-chem-syllabus"
+        />
+      </motion.div>
+    </div>
+  );
+};
+
+export default EssentialFattyAcids;

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/nova-logo.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#FFFFFF" />
+    <script>
+      (function() {
+        try {
+          localStorage.setItem('medpulse_theme', 'light');
+          document.documentElement.classList.remove('dark');
+        } catch (e) {}
+      })();
+    </script>
+    <meta name="description" content="MedPulse — Foundational medical sciences, mastered. INC CBME-compliant clinical nursing LMS with chapter-scoped AI clinical tutor." />
+    <meta name="author" content="Jay" />
+    <meta name="developer" content="Developed by Jay" />
+
+    <!-- Open Graph & Social Meta Tags -->
+    <meta property="og:title" content="MedPulse — Foundational Medical Sciences, Mastered" />
+    <meta property="og:description" content="Integrated Foundational Medical Sciences & Clinical Nursing LMS (Applied Anatomy, Physiology, Biochemistry, Nutrition & Dietetics) with chapter-scoped AI clinical tutor." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/favicon.svg" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="MedPulse — Foundational Medical Sciences, Mastered" />
+    <meta name="twitter:description" content="INC CBME-compliant clinical education & LMS with chapter-scoped AI tutor for nursing students." />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Caveat:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <title>Nova | MedPulse</title>
+  </head>
+  <body class="bg-neutral-50 text-neutral-900 antialiased selection:bg-green-500 selection:text-white">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

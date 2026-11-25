@@ -1,0 +1,32 @@
+{
+  "name": "medpulse-workspace",
+  "version": "1.0.0",
+  "description": "MedPulse — Foundational Medical Sciences & Clinical Nursing LMS (Fullstack Monorepo)",
+  "author": "Jay",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"blue,cyan\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "build": "npm install --include=dev --prefix frontend && npm run build --prefix frontend",
+    "build:frontend": "npm install --include=dev --prefix frontend && npm run build --prefix frontend",
+    "render-build": "npm install && npm install --include=dev --prefix frontend && npm run build --prefix frontend",
+    "start": "node backend/src/server.js",
+    "seed": "npm run seed --prefix backend",
+    "eval:nova": "node eval/nova_eval.js",
+    "lint": "npm run lint --prefix frontend",
+    "install:all": "npm install && npm --prefix backend install && npm --prefix frontend install"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.5"
+  }
+}

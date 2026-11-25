@@ -1,0 +1,524 @@
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import Navbar from "../../../components/Navbar";
+import { ArrowRight, ClipboardList } from "lucide-react";
+import { SubtopicMedicalPlate } from "../../../components/curriculum/SubtopicMedicalPlate";
+import { SubtopicQuiz15Marks } from "../../../components/curriculum/SubtopicQuiz15Marks";
+import { SubtopicNavFooter } from "../../../components/curriculum/SubtopicNavFooter";
+import { UNIT_2_LIPID_SUBTOPICS } from "../../../constants/biochemistryLessonsData";
+
+const FattyAcidsClassification = () => {
+  const [theme, setTheme] = useState("light");
+  const isDark = theme === "dark";
+
+  const toggleTheme = () =>
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+
+  const pageVariants = {
+    hidden: { opacity: 0, y: 24 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, ease: "easeOut" },
+    },
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 16 },
+    visible: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay: 0.1 * i, duration: 0.35, ease: "easeOut" },
+    }),
+  };
+
+  return (
+    <div
+      className={`min-h-screen transition-colors duration-300 ${
+        isDark ? "bg-neutral-950 text-neutral-50" : "bg-neutral-50 text-neutral-900"
+      }`}
+    >
+      {/* Navbar at top */}
+      <Navbar />
+
+      {/* Top Back Navigation Bar */}
+      <div className={`border-b py-2.5 px-4 sm:px-6 lg:px-8 ${isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'}`}>
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Link
+            to="/bio-chem-syllabus"
+            className="inline-flex items-center gap-2 text-xs font-bold text-green-700 hover:text-green-700 transition-colors cursor-pointer group"
+          >
+            <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
+            <span>Back to Full Syllabus</span>
+          </Link>
+          <div className="flex items-center gap-2 text-[11px] font-semibold text-neutral-400">
+            <span>Unit 2: Lipids & Fatty Acids</span>
+            <span>/</span>
+            <span className="text-green-700">Lesson 1 of 4</span>
+          </div>
+        </div>
+      </div>
+
+      <motion.div
+        className="mx-auto max-w-6xl px-4 pb-16 pt-4 sm:px-6 lg:px-8 lg:pt-6"
+        variants={pageVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* Top bar / title */}
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-green-500">
+              Biochemistry • Lipid metabolism
+            </p>
+            <h1 className="mt-1 text-2xl font-bold sm:text-3xl lg:text-4xl">
+              Definition and Classification of Fatty Acids
+            </h1>
+            <p
+              className={`mt-2 text-sm sm:text-base ${
+                isDark ? "text-neutral-300" : "text-neutral-600"
+              }`}
+            >
+              Clear, exam‑oriented overview of what fatty acids are and how they
+              are classified for biochemistry and nutrition.
+            </p>
+          </div>
+
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+              isDark
+                ? "border-neutral-600 bg-neutral-900 text-neutral-100 hover:border-green-400"
+                : "border-neutral-200 bg-white text-neutral-800 hover:border-neutral-300"
+            }`}
+          >
+            <span
+              className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${
+                isDark ? "bg-neutral-800" : "bg-neutral-100"
+              }`}
+            >
+              {isDark ? "🌙" : "☀️"}
+            </span>
+            {isDark ? "Dark mode" : "Light mode"}
+          </button>
+        </div>
+
+        {/* Hero: definition + quick map */}
+        <section
+          className={`grid gap-6 rounded-3xl border p-5 shadow-sm md:grid-cols-[3fr,2fr] ${
+            isDark
+              ? "border-neutral-700 bg-neutral-900/70"
+              : "border-neutral-200 bg-white"
+          }`}
+        >
+          <div className="flex flex-col justify-center">
+            <h2 className="text-lg font-semibold sm:text-xl">Definition</h2>
+            <p
+              className={`mt-2 text-sm sm:text-base ${
+                isDark ? "text-neutral-300" : "text-neutral-700"
+              }`}
+            >
+              Fatty acids are carboxylic acids with a long hydrocarbon chain and
+              a terminal carboxyl group. In the body they occur mainly as parts
+              of triglycerides, phospholipids, and cholesteryl esters, and serve
+              as major fuel molecules and structural components of membranes.
+            </p>
+
+            <div className="mt-4 grid gap-3 text-xs sm:grid-cols-3 sm:text-sm">
+              <div
+                className={`rounded-2xl p-3 ${
+                  isDark ? "bg-neutral-800/80" : "bg-green-50"
+                }`}
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-green-500">
+                  Backbone
+                </p>
+                <p>Hydrocarbon chain + terminal –COOH group.</p>
+              </div>
+              <div
+                className={`rounded-2xl p-3 ${
+                  isDark ? "bg-neutral-800/80" : "bg-neutral-100"
+                }`}
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-green-700">
+                  Uses
+                </p>
+                <p>Energy store, membrane lipids, signalling molecules.</p>
+              </div>
+              <div
+                className={`rounded-2xl p-3 ${
+                  isDark ? "bg-neutral-800/80" : "bg-neutral-100"
+                }`}
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-neutral-800">
+                  Key for exams
+                </p>
+                <p>Know main types and examples (saturated vs unsaturated, etc.).</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Simple classification map */}
+          <div
+            className={`rounded-2xl border text-xs sm:text-sm ${
+              isDark
+                ? "border-neutral-700 bg-neutral-900/80 text-neutral-200"
+                : "border-neutral-200 bg-neutral-50 text-neutral-700"
+            }`}
+          >
+            <div className="border-b px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-green-500 border-neutral-700/60">
+              Main ways to classify fatty acids
+            </div>
+            <div className="p-4 space-y-2">
+              <p>• By chain length</p>
+              <p>• By degree of saturation</p>
+              <p>• By essential vs non‑essential</p>
+              <p>• By position of first double bond (omega‑3, omega‑6 etc.)</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Section Medical Plate */}
+        <SubtopicMedicalPlate
+          subtopicId="fatty-acids-classification"
+          subtopicTitle="Classification of Fatty Acids"
+          subject="biochemistry"
+        />
+
+        {/* Content layout: main concepts + side recap */}
+        <div className="mt-8 grid gap-6 lg:grid-cols-[3fr,2fr]">
+          {/* Left: teaching blocks */}
+          <div className="space-y-6">
+            {/* 1. Classification by chain length */}
+            <motion.section
+              custom={0}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              className={`rounded-3xl p-5 shadow-sm ${
+                isDark
+                  ? "border border-neutral-700 bg-neutral-900/80"
+                  : "border border-neutral-200 bg-white"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-lg font-semibold">
+                  1. Classification by chain length
+                </h2>
+                <span className="rounded-full bg-green-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-green-500">
+                  number of carbons
+                </span>
+              </div>
+
+              <p
+                className={`mt-3 text-sm ${
+                  isDark ? "text-neutral-300" : "text-neutral-700"
+                }`}
+              >
+                Chain length affects how fatty acids are absorbed, transported,
+                and used for energy.
+              </p>
+
+              <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+                <div
+                  className={`rounded-2xl p-3 ${
+                    isDark ? "bg-neutral-800/80" : "bg-green-50"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-green-500">
+                    Short‑chain FA
+                  </p>
+                  <p className="mt-1 text-xs">
+                    About 2–5 carbon atoms; formed mainly in the colon by
+                    bacterial fermentation of fibre (for example, acetate,
+                    propionate, butyrate).
+                  </p>
+                </div>
+                <div
+                  className={`rounded-2xl p-3 ${
+                    isDark ? "bg-neutral-800/80" : "bg-neutral-100"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-green-700">
+                    Medium‑chain FA
+                  </p>
+                  <p className="mt-1 text-xs">
+                    About 6–12 carbons; found in some oils (for example, coconut
+                    oil) and absorbed more rapidly than long‑chain fatty acids.
+                  </p>
+                </div>
+                <div
+                  className={`rounded-2xl p-3 ${
+                    isDark ? "bg-neutral-800/80" : "bg-neutral-100"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-800">
+                    Long‑chain and very‑long‑chain FA
+                  </p>
+                  <p className="mt-1 text-xs">
+                    Long‑chain ≈ 14–18 carbons (for example, palmitic C16,
+                    stearic C18); very‑long‑chain &gt;18 carbons. These are the
+                    main fatty acids in human diets and tissues.
+                  </p>
+                </div>
+              </div>
+            </motion.section>
+
+            {/* 2. Classification by degree of saturation */}
+            <motion.section
+              custom={1}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              className={`rounded-3xl p-5 shadow-sm ${
+                isDark
+                  ? "border border-neutral-700 bg-neutral-900/80"
+                  : "border border-neutral-200 bg-white"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-lg font-semibold">
+                  2. Classification by degree of saturation
+                </h2>
+                <span className="rounded-full bg-green-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-green-700">
+                  double bonds
+                </span>
+              </div>
+
+              <p
+                className={`mt-3 text-sm ${
+                  isDark ? "text-neutral-300" : "text-neutral-700"
+                }`}
+              >
+                This system is based on the presence or absence of carbon–carbon
+                double bonds in the hydrocarbon chain.
+              </p>
+
+              <div className="mt-4 space-y-3 text-sm">
+                <div
+                  className={`rounded-2xl p-3 ${
+                    isDark ? "bg-neutral-800/80" : "bg-neutral-100"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-black dark:text-white">
+                    Saturated fatty acids
+                  </p>
+                  <p className="mt-1">
+                    No double bonds between carbon atoms; all carbons are “saturated”
+                    with hydrogen (for example, palmitic acid, stearic acid).
+                  </p>
+                  <p className="mt-1 text-xs text-black dark:text-white">
+                    Usually solid at room temperature; common in animal fats and
+                    some plant fats.
+                  </p>
+                </div>
+
+                <div
+                  className={`rounded-2xl p-3 ${
+                    isDark ? "bg-neutral-800/80" : "bg-green-50"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-green-500">
+                    Monounsaturated fatty acids (MUFA)
+                  </p>
+                  <p className="mt-1">
+                    Contain one double bond in the carbon chain (for example,
+                    oleic acid, 18:1).
+                  </p>
+                  <p className="mt-1 text-xs text-green-500">
+                    Often liquid at room temperature; abundant in olive oil,
+                    canola oil, and some nuts.
+                  </p>
+                </div>
+
+                <div
+                  className={`rounded-2xl p-3 ${
+                    isDark ? "bg-neutral-800/80" : "bg-neutral-100"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-green-700">
+                    Polyunsaturated fatty acids (PUFA)
+                  </p>
+                  <p className="mt-1">
+                    Contain two or more double bonds (for example, linoleic
+                    acid 18:2, α‑linolenic acid 18:3, arachidonic acid 20:4).
+                  </p>
+                  <p className="mt-1 text-xs text-green-700">
+                    Important for membrane fluidity and as precursors of
+                    eicosanoids.
+                  </p>
+                </div>
+
+                <div
+                  className={`rounded-2xl p-3 ${
+                    isDark ? "bg-neutral-800/80" : "bg-neutral-100"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-800">
+                    Trans fatty acids (brief mention)
+                  </p>
+                  <p className="mt-1">
+                    Unsaturated fatty acids in which one or more double bonds
+                    are in the trans configuration, often formed during partial
+                    hydrogenation of oils.
+                  </p>
+                  <p className="mt-1 text-xs text-neutral-800">
+                    Associated with adverse effects on cardiovascular health;
+                    intake is generally discouraged.
+                  </p>
+                </div>
+              </div>
+            </motion.section>
+
+            {/* 3. Essential vs non-essential and omega nomenclature */}
+            <motion.section
+              custom={2}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              className={`rounded-3xl p-5 shadow-sm ${
+                isDark
+                  ? "border border-neutral-700 bg-neutral-900/80"
+                  : "border border-neutral-200 bg-white"
+              }`}
+            >
+              <h2 className="text-lg font-semibold">
+                3. Essential vs non‑essential and omega series (brief)
+              </h2>
+              <p
+                className={`mt-3 text-sm ${
+                  isDark ? "text-neutral-300" : "text-neutral-700"
+                }`}
+              >
+                For clinical nutrition, it is important to know which fatty
+                acids must be supplied in the diet and how they are named by the
+                position of their first double bond.
+              </p>
+
+              <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                <div
+                  className={`rounded-2xl p-3 ${
+                    isDark ? "bg-neutral-800/80" : "bg-green-50"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-green-500">
+                    Essential vs non‑essential fatty acids
+                  </p>
+                  <ul className="mt-1 space-y-1 list-disc pl-4">
+                    <li>
+                      Essential fatty acids: cannot be synthesised by humans in
+                      adequate amounts and must come from the diet (for example,
+                      linoleic acid, α‑linolenic acid).
+                    </li>
+                    <li>
+                      Non‑essential fatty acids: can be synthesised in the body
+                      from other precursors (for example, palmitic acid).
+                    </li>
+                  </ul>
+                </div>
+
+                <div
+                  className={`rounded-2xl p-3 ${
+                    isDark ? "bg-neutral-800/80" : "bg-neutral-100"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-green-700">
+                    Omega‑3 and omega‑6 (concept)
+                  </p>
+                  <ul className="mt-1 space-y-1 list-disc pl-4">
+                    <li>
+                      The “omega” number indicates the position of the first
+                      double bond from the methyl (ω) end of the chain.
+                    </li>
+                    <li>
+                      Omega‑3 examples: α‑linolenic acid (18:3 n‑3), EPA, DHA.
+                    </li>
+                    <li>
+                      Omega‑6 examples: linoleic acid (18:2 n‑6), arachidonic
+                      acid (20:4 n‑6).
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </motion.section>
+          </div>
+
+          {/* Right: recap / exam focus sidebar */}
+          <motion.aside
+            custom={3}
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            className={`h-fit rounded-3xl p-5 shadow-sm ${
+              isDark
+                ? "border border-neutral-700 bg-neutral-900/80"
+                : "border border-neutral-200 bg-white"
+            }`}
+          >
+            <h2 className="text-lg font-semibold">Exam‑oriented summary</h2>
+            <ul
+              className={`mt-3 space-y-2 text-sm ${
+                isDark ? "text-neutral-200" : "text-neutral-700"
+              }`}
+            >
+              <li>
+                1. Definition: long‑chain carboxylic acids that form the
+                hydrophobic part of most lipids.
+              </li>
+              <li>
+                2. Chain length: short (2–5 C), medium (6–12 C), long (14–18 C),
+                very long (&gt;18 C).
+              </li>
+              <li>
+                3. Saturation: saturated (no double bonds), MUFA (one), PUFA
+                (two or more), plus trans fats as an important clinical variant.
+              </li>
+              <li>
+                4. Essential fatty acids: mainly linoleic and α‑linolenic; know
+                the idea of omega‑3 and omega‑6 series.
+              </li>
+            </ul>
+
+            <div className="mt-4 rounded-2xl bg-green-500/10 p-3 text-xs text-green-400">
+              <p className="font-semibold text-green-100">
+                Quick memory hook
+              </p>
+              <p className="mt-1">
+                “Length, links, and life‑essential”: length = chain length,
+                links = double bonds, life‑essential = essential omega‑3/omega‑6.
+              </p>
+            </div>
+
+            <p className="mt-4 text-[11px] text-neutral-400">
+              Use this page as a base before studying MUFA, PUFA, essential
+              fatty acids, and health effects in more detail.
+            </p>
+          </motion.aside>
+        </div>
+
+        {/* 15 Marks Subtopic Clinical Assessment */}
+        <div className="mt-10">
+          <SubtopicQuiz15Marks
+            subtopicId="fatty-acids-classification"
+            subtopicTitle="Classification of Fatty Acids"
+            unitTitle="Unit 2: Lipids"
+          />
+        </div>
+
+        {/* Sequential Subtopic Navigation Footer */}
+        <SubtopicNavFooter
+          currentIndex={0}
+          totalCount={UNIT_2_LIPID_SUBTOPICS.length}
+          prevSubtopic={{ title: "Diabetes Mellitus Type 2", path: "/DiabetesMellitusType2" }}
+          nextSubtopic={{ title: "Monounsaturated Fatty Acids (MUFA)", path: "/MUFA" }}
+          subtopics={UNIT_2_LIPID_SUBTOPICS}
+          syllabusPath="/bio-chem-syllabus"
+        />
+      </motion.div>
+    </div>
+  );
+};
+
+export default FattyAcidsClassification;

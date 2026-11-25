@@ -1,0 +1,285 @@
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
+
+// Generate JWT Token
+export const generateToken = (user) => {
+  if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+    throw new Error('FATAL: JWT_SECRET environment variable is required in production.');
+  }
+  return jwt.sign(
+    { 
+      id: user._id, 
+      role: user.role, 
+      email: user.email, 
+      collegeId: user.collegeId,
+      firebaseUid: user.firebaseUid 
+    },
+    process.env.JWT_SECRET || 'nursing_ai_jwt_dev_fallback_secret',
+    { expiresIn: '7d' }
+  );
+};
+
+// 1. POST /api/auth/login
+export const login = async (req, res) => {
+  try {
+    const { email, password, username } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Email and password are required.' 
+      });
+    }
+
+    const normEmail = email.toLowerCase().trim();
+
+    // Find user and explicitly include password field
+    let user = await User.findOne({ email: normEmail }).select('+password');
+    if (!user) {
+      // If admin logging in, auto-provision with admin role and jaythakre username
+      if (normEmail === 'jthakre62@gmail.com' || normEmail === 'admin@nursing.edu') {
+        user = await User.create({
+          name: username || 'jaythakre',
+          username: username || 'jaythakre',
+          email: normEmail,
+          password: password,
+          role: 'admin',
+          isActive: true
+        });
+      } else {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Access denied: Account not registered. Only students and faculty authorized by an administrator can access this portal.' 
+        });
+      }
+    }
+
+    if (!(await user.matchPassword(password))) {
+      return res.status(401).json({ 
+        success: false, 
+        error: 'Invalid email or password.' 
+      });
+    }
+
+    if (!user.isActive || user.status === 'disabled') {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Your account has been disabled by an administrator.' 
+      });
+    }
+
+    // Persist entered username to database if provided
+    if (username && user.username !== username.trim()) {
+      user.username = username.trim();
+      await user.save();
+    } else if (normEmail === 'jthakre62@gmail.com' && !user.username) {
+      user.username = 'Jaythakre';
+      await user.save();
+    }
+
+    const token = generateToken(user);
+
+    // Set HTTP-only cookie + send JSON token
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    return res.status(200).json({ 
+      success: true, 
+      token, 
+      user: user.toJSON() 
+    });
+  } catch (error) {
+    console.error('[Auth Controller - Login Error]:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to process login.', 
+      details: error.message 
+    });
+  }
+};
+
+// Fast Lookup Username by email or identifier
+export const lookupUsername = async (req, res) => {
+  try {
+    const rawIdentifier = (req.query.identifier || '').trim().toLowerCase();
+    if (!rawIdentifier) {
+      return res.status(200).json({ success: false, username: null });
+    }
+
+    if (rawIdentifier === 'admin' || rawIdentifier === 'jthakre62@gmail.com' || rawIdentifier === 'admin@nursing.edu') {
+      return res.status(200).json({ success: true, username: 'jaythakre', role: 'admin' });
+    }
+
+    const user = await User.findOne({
+      $or: [
+        { email: rawIdentifier },
+        { username: rawIdentifier }
+      ]
+    }).lean();
+
+    if (user && (user.username || user.name)) {
+      return res.status(200).json({
+        success: true,
+        username: user.username || user.name,
+        role: user.role
+      });
+    }
+
+    return res.status(200).json({ success: false, username: null });
+  } catch (error) {
+    return res.status(200).json({ success: false, username: null });
+  }
+};
+
+// 2. POST /api/auth/signup
+export const signup = async (req, res) => {
+  try {
+    const { name, email, password, role = 'student', collegeId = 'COLLEGE_001', firebaseUid } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Name and email are required.' 
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if user already exists
+    let existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      // If user exists with same email, sync firebaseUid if provided
+      if (firebaseUid && !existingUser.firebaseUid) {
+        existingUser.firebaseUid = firebaseUid;
+        await existingUser.save();
+      }
+      const token = generateToken(existingUser);
+      return res.status(200).json({
+        success: true,
+        token,
+        user: existingUser.toJSON()
+      });
+    }
+
+    // Only administrators are permitted to add new student and faculty accounts
+    let isAdminCaller = false;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      const authHeaderToken = req.headers.authorization.split(' ')[1].trim();
+      try {
+        const decoded = jwt.verify(authHeaderToken, process.env.JWT_SECRET || 'nursing_ai_jwt_dev_fallback_secret');
+        if (decoded.role === 'admin') isAdminCaller = true;
+      } catch (e) {}
+    }
+    if (req.user && req.user.role === 'admin') {
+      isAdminCaller = true;
+    }
+
+    if (!isAdminCaller) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied: Public registration is closed. Only an administrator can provision student and faculty accounts.'
+      });
+    }
+
+    // Validate role
+    const validRoles = ['student', 'faculty', 'admin'];
+    const assignedRole = validRoles.includes(role) ? role : 'student';
+
+    const newUser = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      password: password || 'NursingPass@2026',
+      role: assignedRole,
+      collegeId,
+      firebaseUid: firebaseUid || undefined,
+      isActive: true,
+      status: 'active',
+      isDefaultPassword: !password
+    });
+
+    const token = generateToken(newUser);
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    return res.status(201).json({
+      success: true,
+      token,
+      user: newUser.toJSON()
+    });
+  } catch (error) {
+    console.error('[Auth Controller - Signup Error]:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to create user account.', 
+      details: error.message 
+    });
+  }
+};
+
+// 3. GET /api/auth/me
+export const getMe = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: 'Not authenticated' });
+    }
+    return res.status(200).json({ 
+      success: true, 
+      user: req.user.toJSON ? req.user.toJSON() : req.user 
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// 4. POST /api/auth/change-password
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Current and new password are required.' 
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'New password must be at least 6 characters long.' 
+      });
+    }
+
+    const userId = req.user._id || req.user.id || req.user.dbUserId;
+    const user = await User.findById(userId).select('+password');
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    if (!(await user.matchPassword(currentPassword))) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Current password incorrect.' 
+      });
+    }
+
+    user.password = newPassword;
+    user.isDefaultPassword = false;
+    await user.save();
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Password updated successfully.' 
+    });
+  } catch (error) {
+    console.error('[Auth Controller - Change Password Error]:', error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};

@@ -1,0 +1,195 @@
+import React, { lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import AppShell from './components/layout/AppShell';
+
+// Public Auth & Landing Pages (Lazy Loaded)
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const SignupPage = lazy(() => import('./pages/auth/SignupPage'));
+
+// Core Student Pages (Lazy Loaded)
+const Home = lazy(() => import('./pages/Home'));
+const ExplorerPage = lazy(() => import('./pages/ExplorerPage'));
+const SyllabusHub = lazy(() => import('./pages/SyllabusHub'));
+const BioChemistrySyllabus = lazy(() => import('./pages/BioChemistrySyllabus'));
+const BiochemistryLessonView = lazy(() => import('./pages/BioChemistryPages/BiochemistryLessonView'));
+const AnatomySyllabus = lazy(() => import('./pages/AnatomySyllabus'));
+const AnatomyLessonView = lazy(() => import('./pages/AnatomyPages/AnatomyLessonView'));
+const PhysiologySyllabus = lazy(() => import('./pages/PhysiologySyllabus'));
+const PhysiologyLessonView = lazy(() => import('./pages/PhysiologyPages/PhysiologyLessonView'));
+const NutritionSyllabus = lazy(() => import('./pages/NutritionSyllabus'));
+const NutritionLessonView = lazy(() => import('./pages/NutritionPages/NutritionLessonView'));
+const QuestionBankView = lazy(() => import('./pages/QuestionBankView'));
+const QuizView = lazy(() => import('./pages/student/QuizView'));
+const StudentResults = lazy(() => import('./pages/student/StudentResults'));
+
+// Admin Pages (Lazy Loaded)
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const UserManagement = lazy(() => import('./pages/admin/UserManagement'));
+const ContentEditor = lazy(() => import('./pages/admin/ContentEditor'));
+const ResultAudit = lazy(() => import('./pages/admin/ResultAudit'));
+const ChatLogsView = lazy(() => import('./pages/admin/ChatLogsView'));
+
+// Faculty Pages (Lazy Loaded)
+const FacultyDashboard = lazy(() => import('./pages/faculty/FacultyDashboard'));
+const FacultyQuestions = lazy(() => import('./pages/faculty/FacultyQuestions'));
+const FacultyResults = lazy(() => import('./pages/faculty/FacultyResults'));
+
+// Module 1 Pages (Lazy Loaded)
+const ClassificationOfCarb = lazy(() => import('./pages/BioChemistryPages/Module1/ClassificationOfCarb'));
+const DigestionOfCarb = lazy(() => import('./pages/BioChemistryPages/Module1/DigestionOfCarb'));
+const AbsorptionOfCarb = lazy(() => import('./pages/BioChemistryPages/Module1/AbsorptionOfCarb'));
+const MetabolicPathwaysOfCarb = lazy(() => import('./pages/BioChemistryPages/Module1/MetabolicPathwayOfCarb'));
+const DisordersOfCarb = lazy(() => import('./pages/BioChemistryPages/Module1/DisordersOfCarb'));
+const RegulationOfBloodGlucose = lazy(() => import('./pages/BioChemistryPages/Module1/RegulationOfBloodGlucose'));
+const DiabetesMellitusType1 = lazy(() => import('./pages/BioChemistryPages/Module1/DiabetesMellitusType1'));
+const DiabetesMellitusType2 = lazy(() => import('./pages/BioChemistryPages/Module1/DiabetesMellitusType2'));
+
+// Module 2 Pages (Lazy Loaded)
+const FattyAcidsClassification = lazy(() => import('./pages/BioChemistryPages/Module2/FattyAcidsClassification'));
+const MUFA = lazy(() => import('./pages/BioChemistryPages/Module2/MUFA'));
+const PUFA = lazy(() => import('./pages/BioChemistryPages/Module2/PUFA'));
+const EssentialFattyAcids = lazy(() => import('./pages/BioChemistryPages/Module2/EssentialFattyAcids'));
+
+import AIWidget from './components/AIWidget';
+import ForceChangePasswordModal from './components/auth/ForceChangePasswordModal';
+
+// Clean Minimal Page Loading Skeleton
+const PageLoader = () => (
+  <div className="min-h-screen bg-neutral-50 flex flex-col items-center justify-center p-6">
+    <div className="w-10 h-10 border-3 border-green-100 border-t-green-600 rounded-full animate-spin mb-3" />
+    <span className="text-xs font-bold text-neutral-500 tracking-wide animate-pulse">
+      Loading MedPulse curriculum...
+    </span>
+  </div>
+);
+
+// Unified App Shell Layout wrapper for all protected routes
+const AppLayout = () => {
+  return (
+    <AppShell>
+      <Outlet />
+    </AppShell>
+  );
+};
+
+const AppRoutes = () => {
+  const location = useLocation();
+  const { currentUser } = useAuth();
+
+  // Hide AI Tutor on landing, login and signup pages
+  const isPublicPage = location.pathname === '/' || location.pathname === '/login' || location.pathname === '/signup';
+  const showAIWidget = currentUser && !isPublicPage;
+
+  return (
+    <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans selection:bg-green-500 selection:text-white">
+      {/* Skip to Main Content Link for Keyboard and Screen Reader Accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-green-500 focus:text-white focus:font-semibold focus:text-xs focus:rounded-xl focus:shadow-xl focus:ring-2 focus:ring-white focus:outline-none"
+      >
+        Skip to main content
+      </a>
+
+      {/* Mandatory Password Change Popup on First Login */}
+      <ForceChangePasswordModal />
+
+      <main id="main-content" tabIndex="-1" className="outline-none">
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<Navigate to="/login" replace />} />
+
+            {/* 3D Anatomy Interactive Explorer (Dedicated Museum Studio Layout) */}
+            <Route element={<ProtectedRoute allowedRoles={['student', 'faculty', 'admin']} />}>
+              <Route path="/explorer" element={<ExplorerPage />} />
+              <Route path="/3d-explorer" element={<ExplorerPage />} />
+            </Route>
+
+            {/* Authenticated Routes wrapped in unified AppLayout */}
+            <Route element={<AppLayout />}>
+              {/* Student Learning & Assessment Routes (Accessible to student, faculty, admin) */}
+              <Route element={<ProtectedRoute allowedRoles={['student', 'faculty', 'admin']} />}>
+                <Route path="/dashboard" element={<Home />} />
+                <Route path="/syllabus" element={<SyllabusHub />} />
+                <Route path="/curriculum" element={<Navigate to="/syllabus" replace />} />
+                <Route path="/bio-chem-syllabus" element={<BioChemistrySyllabus />} />
+                <Route path="/biochemistry/lesson/:lessonSlug" element={<BiochemistryLessonView />} />
+                <Route path="/anatomy-syllabus" element={<AnatomySyllabus />} />
+                <Route path="/anatomy/lesson/:chapterId" element={<AnatomyLessonView />} />
+                <Route path="/physiology-syllabus" element={<PhysiologySyllabus />} />
+                <Route path="/physiology/lesson/:chapterId" element={<PhysiologyLessonView />} />
+                <Route path="/nutrition-syllabus" element={<NutritionSyllabus />} />
+                <Route path="/nutrition/lesson/:submoduleSlug" element={<NutritionLessonView />} />
+                <Route path="/question-bank" element={<QuestionBankView />} />
+                <Route path="/student/quiz/:topicId" element={<QuizView />} />
+                <Route path="/quiz/:topicId" element={<QuizView />} />
+                <Route path="/student/results" element={<StudentResults />} />
+
+                {/* Module 1 */}
+                <Route path="/classification-of-carb" element={<ClassificationOfCarb />} />
+                <Route path="/digestion-of-carb" element={<DigestionOfCarb />} />
+                <Route path="/absorption-of-carb" element={<AbsorptionOfCarb />} />
+                <Route path="/MetabolicPathwaysOfCarb" element={<MetabolicPathwaysOfCarb />} />
+                <Route path="/DisordersOfCarb" element={<DisordersOfCarb />} />
+                <Route path="/RegulationOfBloodGlucose" element={<RegulationOfBloodGlucose />} />
+                <Route path="/DiabetesMellitusType1" element={<DiabetesMellitusType1 />} />
+                <Route path="/DiabetesMellitusType2" element={<DiabetesMellitusType2 />} />
+
+                {/* Module 2 */}
+                <Route path="/FattyAcidsClassification" element={<FattyAcidsClassification />} />
+                <Route path="/MUFA" element={<MUFA />} />
+                <Route path="/PUFA" element={<PUFA />} />
+                <Route path="/EssentialFattyAcids" element={<EssentialFattyAcids />} />
+              </Route>
+
+              {/* Faculty Protected Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['faculty', 'admin']} />}>
+                <Route path="/faculty/dashboard" element={<FacultyDashboard />} />
+                <Route path="/faculty/questions" element={<FacultyQuestions />} />
+                <Route path="/faculty/results" element={<FacultyResults />} />
+              </Route>
+
+              {/* Admin Protected Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/users" element={<UserManagement />} />
+                <Route path="/admin/content" element={<ContentEditor />} />
+                <Route path="/admin/results" element={<ResultAudit />} />
+                <Route path="/admin/chat-logs" element={<ChatLogsView />} />
+              </Route>
+            </Route>
+
+            {/* Fallback Catch-all -> Redirect to Login */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </Suspense>
+      </main>
+
+      {/* Global AI Clinical Tutor */}
+      {showAIWidget && <AIWidget />}
+    </div>
+  );
+};
+
+const App = () => {
+  return (
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </AuthProvider>
+      </ToastProvider>
+    </ThemeProvider>
+  );
+};
+
+export default App;

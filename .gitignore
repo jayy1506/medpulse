@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment Variables
+.env
+.env.*
+*/.env
+*/.env.*
+*.local
+!.env.example
+!*/.env.example
+
+# Build Output
+dist/
+*/dist/
+build/
+*/build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Editor & OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+backend/data/
+
+# Raw Curriculum Documents & Non-Web Image Assets
+*.docx
+*.doc
+*.pdf
+*.emf
+*.wmf
+*.wdp
+Anatomy Book as per INC syllabus/
+Physiology Book as per INC syllabus/
+
+# Internal Agent Framework & Dev Harness (Not for Deployment)
+.agents/
+.agent/
+.gsd/
+.gemini/
+adapters/
+model_capabilities.yaml
+GSD-STYLE.md
+VERSION
+scripts/
+

@@ -490,9 +490,8 @@ export const AdminDashboard = () => {
                   onChange={(e) => setSelectedStatus(e.target.value)}
                   className="px-3 py-2 rounded-xl border border-neutral-200 text-xs font-bold text-[#123B50] bg-white outline-none cursor-pointer"
                 >
-                  <option value="all">All Statuses</option>
-                  <option value="active">Active</option>
-                  <option value="disabled">Disabled</option>
+                  <option value="all">All Users</option>
+                  <option value="active">Active (Enabled)</option>
                 </select>
               </div>
             </div>

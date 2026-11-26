@@ -651,21 +651,10 @@ Dr. Gregory House,house@nursing-lms.edu,faculty,FacultyPass@2026,COLLEGE_001`;
                             Always Active
                           </span>
                         ) : (
-                          <button
-                            onClick={() => handleToggleStatus(user._id)}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all ${
-                              user.status === 'active'
-                                ? 'bg-green-100 text-green-700 hover:bg-green-100'
-                                : 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200'
-                            }`}
-                          >
-                            <span
-                              className={`w-1.5 h-1.5 rounded-full ${
-                                user.status === 'active' ? 'bg-green-500' : 'bg-neutral-800'
-                              }`}
-                            ></span>
-                            {user.status === 'active' ? 'Active' : 'Disabled'}
-                          </button>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                            Active
+                          </span>
                         )}
                       </td>
 
